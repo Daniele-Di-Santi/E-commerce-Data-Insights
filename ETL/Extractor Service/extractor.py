@@ -2,15 +2,16 @@
 import requests
 import json
 from datetime import datetime
+from utils import load_config
 import os
 from kafka import KafkaProducer
 from loguru import logger
 
+config = load_config()
+API_URL = config["api_url"]
+OUTPUT_DIR = config["output_dir"]
 
-API_URL = "https://fakestoreapi.com/products"
-OUTPUT_DIR = "data"
-
-producer = KafkaProducer(bootstrap_servers="kafka:9092",
+producer = KafkaProducer(bootstrap_servers=config["kafka"]["bootstrap_servers"],
                          value_serializer=lambda v: json.dumps(v).encode("utf-8"))
 
 def extract_data():

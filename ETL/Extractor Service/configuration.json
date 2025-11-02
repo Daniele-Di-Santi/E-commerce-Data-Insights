@@ -1,0 +1,16 @@
+{
+  "api_url": "https://fakestoreapi.com/products",
+  "output_dir": "data/",
+  "log_path": "logs/extractor.log",
+  "interval_hours": 6,
+  "kafka": {
+    "bootstrap_servers": "localhost:9092",
+    "topic": "etl_products"
+  },
+  "mongo": {
+    "host": "localhost",
+    "port": 27017,
+    "database": "etl_db",
+    "collection": "products"
+  }
+}
