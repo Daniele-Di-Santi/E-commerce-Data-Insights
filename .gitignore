@@ -5,7 +5,7 @@
 
 #Custom ignore rules for ETL Extractor Service
 ETL/Extractor Service/data/*
-
+.venv/
 
 
 # User-specific files
@@ -402,6 +402,7 @@ MigrationBackup/
 FodyWeavers.xsd
 
 # VS Code files for those working on multiple tools
+.vscode/
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json

@@ -1,6 +1,12 @@
 {
-  "api_url": "https://fakestoreapi.com/products",
-  "output_dir": "data/",
+  "data_sources": ["fake_store"],
+  "fake_store": {
+    "name": "Fake Store API",
+    "description": "A free API for testing and prototyping e-commerce applications.",
+    "api_url": "https://fakestoreapi.com/products"
+  },
+
+  "output_dir": "etl/data",
   "log_path": "logs/extractor.log",
   "interval_hours": 6,
   "kafka": {
