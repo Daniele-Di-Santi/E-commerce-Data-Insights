@@ -5,7 +5,7 @@ Then, a ML powered system will extract useful insights from the data leveraging 
 
 - 🟡 ETL
   - 🟡 Extraction
-  - 🔴 Transformation
+  - 🟡 Transformation
   - 🔴 Loading
 - 🔴 Data Visualization
 - 🔴 RAG

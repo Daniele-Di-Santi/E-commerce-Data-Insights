@@ -28,7 +28,7 @@ def send_to_kafka(producer, topic, data):
         for item in data:
             producer.send(topic, value=item)
         producer.flush()
-        logger.success(f"Data sent to Kafka")
+        logger.success(f"Data (len: {len(data)}) sent to Kafka in topic: {topic}")
 
     except Exception as e:
         logger.exception(f"Error during sending the data to Kafka: {e}")
