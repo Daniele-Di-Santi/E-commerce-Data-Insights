@@ -76,7 +76,7 @@ def init_kafka_consumer(
         raise
 
 
-def get_messages_from_consumer(consumer, timeout_ms=1000, max_messages=1):
+def get_messages_from_consumer(consumer, timeout_ms=1000, max_messages=None):
     """Poll the consumer and return up to `max_messages` message values.
 
     - consumer: KafkaConsumer instance
@@ -85,6 +85,9 @@ def get_messages_from_consumer(consumer, timeout_ms=1000, max_messages=1):
 
     Returns: list of message values (deserialized)
     """
+    if max_messages is None:
+        max_messages = float('inf')
+
     messages = []
     try:
         records = consumer.poll(timeout_ms=timeout_ms)

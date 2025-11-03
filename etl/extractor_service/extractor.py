@@ -1,7 +1,7 @@
 # extractor.py
 import requests
 import json
-from etl.kafka.kafka_utils import init_kafka, send_to_kafka
+from etl.utils.kafka.kafka_utils import init_kafka, send_to_kafka
 from etl.utils.utils import load_config, save_data
 
 import os

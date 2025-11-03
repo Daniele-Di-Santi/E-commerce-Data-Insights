@@ -1,5 +1,5 @@
 import json
-from etl.kafka.kafka_utils import fetch_one_message_from_topic, init_kafka, send_to_kafka, get_messages_from_consumer, init_kafka_consumer
+from etl.utils.kafka.kafka_utils import fetch_one_message_from_topic, init_kafka, send_to_kafka, get_messages_from_consumer, init_kafka_consumer
 from etl.utils.utils import load_config
 from loguru import logger
 import pandas as pd

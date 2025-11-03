@@ -3,3 +3,4 @@ apscheduler
 loguru
 kafka-python
 pandas
+pymongo
