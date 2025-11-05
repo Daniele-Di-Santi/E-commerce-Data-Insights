@@ -12,6 +12,7 @@ def fetch_and_transform():
         data = get_data(topic)
         force_clean_kafka_topic(topic)
         data = adjust_id(data)
+        data = adjust_rating(data)
         send_to_kafka(topic + "_transformed", data)
 
 def transform_to_dataframe(data):
@@ -48,7 +49,7 @@ def adjust_id(data):
 def adjust_rating(data):
     for record in data:
         if 'rating' in record:
-            record['rating'] = float(record['rating'])
+            record['rating'] = float(record['rating']['rate'])
     return data
 
 if __name__ == "__main__":
