@@ -1,25 +1,23 @@
 # extractor.py
 import requests
-import json
-from etl.utils.kafka.kafka_utils import init_kafka, send_to_kafka
-from etl.utils.utils import load_config, save_data
-
-import os
+from utils.kafka.kafka_utils import send_to_kafka
+from utils.utils import load_config, save_data, produce_metadata
 from loguru import logger
 
 config = load_config()
-producer = init_kafka()
-OUTPUT_DIR = config["output_dir"]
 
 
 def extract_data():
     for source in config["data_sources"]:
+        data_dir = config['data']["output_dir"] + f"/{source}"
+        metadata_dir = config['metadata']["output_dir"] + f"/{source}"
         api_url = config[source]["api_url"]
         data = get_data(api_url)
-        dir = OUTPUT_DIR + f"/{source}"
-        save_data(data, dir)
-        send_to_kafka(producer, source, data)
-        return data
+        metadata = produce_metadata(len(data), source)
+        save_data(data, data_dir)
+        save_data(metadata, metadata_dir)
+        send_to_kafka(source, data)
+        send_to_kafka(config['metadata']["topic"]+source, metadata)
 
 def get_data(api_url):
     logger.info("Starting data download...")
@@ -32,6 +30,8 @@ def get_data(api_url):
 
     except Exception as e:
         logger.exception(f"Error during the download: {e}")
+
+
 
 
 if __name__ == "__main__":

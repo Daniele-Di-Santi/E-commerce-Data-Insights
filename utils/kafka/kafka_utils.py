@@ -1,13 +1,15 @@
 import json
-from kafka import KafkaProducer, KafkaConsumer
+from kafka import KafkaProducer, KafkaConsumer, KafkaAdminClient
+from kafka.admin import NewTopic
+from kafka.errors import TopicAlreadyExistsError, UnknownTopicOrPartitionError
 from loguru import logger
-from etl.utils.utils import load_config
+from utils.utils import load_config
 
 config = load_config()
 
 
-# Initialize Kafka Producer
-def init_kafka():
+# -- Kafka Producer helpers -------------------------------------------------
+def init_kafka_producer():
     logger.info("Initializing Kafka producer...")
 
     try:
@@ -20,10 +22,11 @@ def init_kafka():
     except Exception as e:
         logger.exception(f"Error during Kafka producer initialization: {e}")
 
+def send_to_kafka(topic, data, producer=None):
+    if producer is None:
+        producer = init_kafka_producer()
 
-def send_to_kafka(producer, topic, data):
     logger.info("Sending data to Kafka...")
-
     try:
         for item in data:
             producer.send(topic, value=item)
@@ -32,6 +35,9 @@ def send_to_kafka(producer, topic, data):
 
     except Exception as e:
         logger.exception(f"Error during sending the data to Kafka: {e}")
+    
+    finally:
+        producer.close()
 
 
 # -- Kafka Consumer helpers -------------------------------------------------
@@ -75,8 +81,7 @@ def init_kafka_consumer(
         logger.exception(f"Error during Kafka consumer initialization: {e}")
         raise
 
-
-def get_messages_from_consumer(consumer, timeout_ms=1000, max_messages=None):
+def get_messages_from_consumer(consumer=None, topic=None, group_id=None, timeout_ms=1000, max_messages=None):
     """Poll the consumer and return up to `max_messages` message values.
 
     - consumer: KafkaConsumer instance
@@ -85,6 +90,12 @@ def get_messages_from_consumer(consumer, timeout_ms=1000, max_messages=None):
 
     Returns: list of message values (deserialized)
     """
+    if consumer is None:
+        if topic is None:
+            raise ValueError("Either consumer or topic must be provided")
+        
+        consumer = init_kafka_consumer(topic, group_id=group_id)
+    
     if max_messages is None:
         max_messages = float('inf')
 
@@ -103,31 +114,73 @@ def get_messages_from_consumer(consumer, timeout_ms=1000, max_messages=None):
     except Exception as e:
         logger.exception(f"Error while polling consumer: {e}")
         return messages
+    
+    finally:
+        consumer.close()
 
 
-def fetch_one_message_from_topic(topic, timeout_seconds=5, group_id=None, bootstrap_servers=None):
-    """Convenience function: create a consumer, fetch one message (or None), then close it.
-
-    Returns the deserialized message value or None if no message arrived within timeout.
-    """
-    consumer = None
+def force_clean_kafka_topic(topic: str, partitions: int = 1, replication_factor: int = 1):
+    """Pulisce un topic Kafka eliminandolo e ricreandolo.
+    Questo è il modo più sicuro per assicurarsi che tutti i messaggi vengano rimossi."""
+    
+    logger.info(f"Eliminazione e ricreazione topic Kafka: {topic}")
+    
+    # Crea admin client
+    admin_client = KafkaAdminClient(
+        bootstrap_servers=config["kafka"]["bootstrap_servers"]
+    )
+    
     try:
+        # Elimina il topic se esiste
+        try:
+            admin_client.delete_topics([topic])
+            logger.info(f"Topic {topic} eliminato")
+        except UnknownTopicOrPartitionError:
+            logger.info(f"Topic {topic} non esisteva")
+    
+        # Aspetta un momento per assicurarsi che l'eliminazione sia completata
+        import time
+        time.sleep(2)
+        
+        # Ricrea il topic
+        new_topic = NewTopic(
+            name=topic,
+            num_partitions=partitions,
+            replication_factor=replication_factor
+        )
+        
+        admin_client.create_topics([new_topic])
+        logger.success(f"Topic {topic} ricreato con successo")
+        
+    except Exception as e:
+        logger.exception(f"Errore durante la pulizia forzata del topic: {e}")
+        raise
+    
+    finally:
+        admin_client.close()
+
+def reset_consumer_offsets(topic: str, group_id: str):
+    """Resetta gli offset di un consumer group a latest."""
+    logger.info(f"Reset offset per gruppo {group_id} su topic {topic}")
+    
+    try:
+        # Crea un consumer nel gruppo
         consumer = init_kafka_consumer(
             topic,
             group_id=group_id,
-            bootstrap_servers=bootstrap_servers,
             auto_offset_reset="latest",
-            enable_auto_commit=False,
+            enable_auto_commit=True
         )
-
-        msgs = get_messages_from_consumer(consumer, timeout_ms=int(timeout_seconds * 1000), max_messages=1)
-        return msgs[0] if msgs else None
+        
+        # Forza la lettura e il commit degli offset latest
+        consumer.poll(timeout_ms=1000)
+        consumer.commit()
+        consumer.close()
+        
+        logger.success(f"Offset resettati per topic={topic} group={group_id}")
+        
     except Exception as e:
-        logger.exception(f"Error fetching message from topic {topic}: {e}")
-        return None
-    finally:
-        if consumer:
-            try:
-                consumer.close()
-            except Exception:
-                pass
+        logger.exception(f"Errore durante il reset degli offset: {e}")
+        raise
+
+

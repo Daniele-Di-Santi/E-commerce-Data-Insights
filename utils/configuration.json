@@ -6,17 +6,26 @@
     "api_url": "https://fakestoreapi.com/products"
   },
 
-  "output_dir": "etl/data",
-  "log_path": "logs/extractor.log",
-  "interval_hours": 6,
   "kafka": {
-    "bootstrap_servers": "localhost:9092"
+      "bootstrap_servers": "localhost:9092"
+    },
+
+
+  "data":{
+    "output_dir": "etl/data",
+    "log_path": "logs/extractor.log",
+    "interval_hours": 6
+  },
+
+  "metadata":{
+    "output_dir": "etl/metadata",
+    "topic": "meta_"
   },
 
   "mongo": {
     "host": "localhost",
     "port": 27017,
-    "database": "etl_db",
+    "database": "ecommerce",
     "collection": "products"
   }
 }

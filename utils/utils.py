@@ -1,12 +1,12 @@
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from loguru import logger
 
 DIR_MAX_FILES = 3
 
 # Load Configuration
-def load_config(path="etl/utils/configuration.json"):
+def load_config(path="utils/configuration.json"):
     with open(path, "r", encoding="utf-8") as f:
         config = json.load(f)
     return config
@@ -72,3 +72,11 @@ def clean_dir(dir_path):
 
     except Exception as e:
         logger.exception(f"Error while cleaning directory: {e}")
+
+def produce_metadata(data_size, source):
+    metadata = {
+        "source": source,
+        "record_count": data_size,
+        "timestamp": str(datetime.now(timezone.utc).isoformat())
+    }
+    return metadata

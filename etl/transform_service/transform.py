@@ -1,21 +1,18 @@
 import json
-from etl.utils.kafka.kafka_utils import fetch_one_message_from_topic, init_kafka, send_to_kafka, get_messages_from_consumer, init_kafka_consumer
-from etl.utils.utils import load_config
+from utils.kafka.kafka_utils import send_to_kafka, force_clean_kafka_topic, get_messages_from_consumer
+from utils.utils import load_config
 from loguru import logger
 import pandas as pd
 
-config = load_config()
 
 def fetch_and_transform():
+    config = load_config()
+
     for topic in config["data_sources"]:
         data = get_data(topic)
-        dataframe = transform_to_dataframe(data)
-        print(dataframe.head())
-
-        producer = init_kafka()
-        send_to_kafka(producer, topic + "_transformed", dataframe.to_dict(orient="records"))
-
-        return dataframe
+        force_clean_kafka_topic(topic)
+        data = adjust_id(data)
+        send_to_kafka(topic + "_transformed", data)
 
 def transform_to_dataframe(data):
     logger.info("Starting data transformation...")
@@ -29,11 +26,10 @@ def transform_to_dataframe(data):
         logger.exception(f"Error during data transformation: {e}")
 
 def get_data(topic):
-    consumer = init_kafka_consumer(topic)
     logger.info(f"Extracting data from Kafka topic: {topic}")
 
     try:
-        data = get_messages_from_consumer(consumer, timeout_ms=2000, max_messages=5)
+        data = get_messages_from_consumer(topic=topic)
         logger.success(f"Extracted {len(data)} records from topic: {topic}")
         return data
 
@@ -41,11 +37,21 @@ def get_data(topic):
         logger.exception(f"Error during data extraction from Kafka: {e}")
         return []
     
-    finally:
-        consumer.close()
     
+def adjust_id(data):
+    for record in data:
+        if 'id' in record:
+            record['_id'] = str(record['id'])
+            del record['id']
+    return data
 
+def adjust_rating(data):
+    for record in data:
+        if 'rating' in record:
+            record['rating'] = float(record['rating'])
+    return data
 
 if __name__ == "__main__":
     fetch_and_transform()
+ 
    

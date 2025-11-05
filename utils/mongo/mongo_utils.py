@@ -1,12 +1,16 @@
 from typing import List, Dict, Any
+from utils.utils import load_config
 from loguru import logger
 from pymongo import MongoClient
 from pymongo.collection import Collection
 from pymongo.database import Database
 
-def get_mongodb_connection(host: str = 'localhost', 
-                         port: int = 27017, 
-                         database: str = 'ecommerce') -> Database:
+config = load_config()
+
+# -- MongoDB helpers -------------------------------------------------
+def get_mongodb_connection(host: str = config['mongo']['host'], 
+                         port: int = config['mongo']['port'], 
+                         database: str = config['mongo']['database']) -> Database:
     """
     Create a connection to MongoDB and return the database object
     """
