@@ -4,3 +4,4 @@ loguru
 kafka-python
 pandas
 pymongo
+flask

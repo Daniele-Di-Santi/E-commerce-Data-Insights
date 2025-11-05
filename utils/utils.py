@@ -1,5 +1,6 @@
 import json
 import os
+import csv
 from datetime import datetime, timezone
 from loguru import logger
 
@@ -80,3 +81,13 @@ def produce_metadata(data_size, source):
         "timestamp": str(datetime.now(timezone.utc).isoformat())
     }
     return metadata
+
+def produce_csv(data, output_file):
+    try:
+        with open(output_file, "w", newline='', encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=list(data[0].keys()))
+            writer.writeheader()
+            writer.writerows(data)
+        logger.success(f"CSV file created at {output_file}")
+    except Exception as e:
+        logger.exception(f"Error while producing CSV: {e}")
