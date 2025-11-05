@@ -6,6 +6,7 @@
 #Custom ignore rules for ETL Extractor Service
 ETL/Extractor Service/data/*
 .venv/
+products_data.csv
 
 
 # User-specific files
